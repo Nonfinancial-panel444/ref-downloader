@@ -1,8 +1,9 @@
 # ref-downloader
 
-> **Stop spending 3 hours hunting 50 PDFs for your literature review.**
+> **Stop losing an afternoon to chasing dozens of reference PDFs by hand.**
 > One DOI in, every reference PDF out — using your existing institutional access.
 
+[![Version: 0.1.0](https://img.shields.io/badge/version-0.1.0-orange.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 ![Verified on Windows + Edge](https://img.shields.io/badge/verified%20on-Windows%20+%20Edge-success)
@@ -33,12 +34,14 @@ Config:      config.example.toml + config.local.toml
   [ 2] downloaded (1.2 MB)        Wang2018_AdvMater.pdf
   [ 3] manual_pending (auth_redirect)
   [ 4] downloaded (655 KB)        Chen2019_JACS.pdf
-  ... 33 more refs processed ...
+  [ 5] failed (challenge_timeout)
+  [ 6] ignored (ignored_institution_access)
+  ... 31 more refs processed ...
   [38] downloaded (956 KB)        Park2024_JElectrochemSoc.pdf
 
 ========== Download report ==========
 Total references:  38
-Main PDFs:         33 downloaded · 4 manual_pending · 1 ignored
+Main PDFs:         33 downloaded · 3 manual_pending · 1 failed · 1 ignored
 SI files:          12 captured
 PDFs land in:      ./jacs.5c05017_refs/jacs.5c05017/
 =====================================
@@ -47,10 +50,18 @@ PDFs land in:      ./jacs.5c05017_refs/jacs.5c05017/
 ## Contents
 
 - [What you get](#what-you-get)
-- [Why this and not Zotero / scihub / generic scrapers?](#why-this-and-not-zotero--scihub--generic-scrapers)
-- [Quick start](#quick-start) · [Requirements](#requirements) · [Install](#install) · [Usage examples](#usage-examples)
-- [Configuration](#configuration) · [Architecture](#architecture) · [Supported publishers](#supported-publishers)
-- [Known limitations](#known-limitations) · [Contributing](#contributing) · [Security](#security) · [License](#license)
+- [Why not Zotero, scihub, or generic scrapers?](#why-not-zotero-scihub-or-generic-scrapers)
+- [Quick start](#quick-start)
+- [Requirements](#requirements)
+- [Install](#install)
+- [Usage examples](#usage-examples)
+- [Configuration](#configuration)
+- [Architecture](#architecture)
+- [Supported publishers](#supported-publishers)
+- [Known limitations](#known-limitations)
+- [Contributing](#contributing)
+- [Security](#security)
+- [License](#license)
 
 ## What you get
 
@@ -59,7 +70,7 @@ PDFs land in:      ./jacs.5c05017_refs/jacs.5c05017/
 - **You always know which refs failed and why.** _`download_report.csv` gives every ref a status + reason (`manual_pending (auth_redirect)`, `failed (challenge_timeout)`, `ignored`); `events.jsonl` keeps the per-ref event trace._
 - **Pick up where you left off** after a VPN drop, browser crash, or `Ctrl+C`. _State persists per project; rerunning skips already-downloaded refs and retries only the failures._
 
-## Why this and not Zotero / scihub / generic scrapers?
+## Why not Zotero, scihub, or generic scrapers?
 
 - **vs. Zotero's _Find Available PDF_** — walks one paper at a time and silently gives up at SSO redirects. ref-downloader walks the whole reference list at once and treats SSO as a configurable step instead of a dead end.
 - **vs. scihub-style tools** — don't carry your institutional license, so paywalled refs you _legitimately_ have access to just fail. ref-downloader uses your authenticated browser session, so subscriptions you already pay for actually count.
@@ -68,13 +79,14 @@ PDFs land in:      ./jacs.5c05017_refs/jacs.5c05017/
 ## Quick start
 
 ```powershell
+# Replace <REPO_URL> with this repo's clone URL.
 git clone <REPO_URL> && cd ref-downloader
 pip install -r requirements.txt && playwright install msedge
 cp config.example.toml config.local.toml      # then set [crossref].mailto
 python run_ref_downloader.py 10.1021/jacs.5c05017
 ```
 
-That's the happy path. Details below.
+What you'll see: 30–80 refs discovered for a typical chemistry/physics paper, then a mix of `downloaded` (refs your institution covers), `manual_pending` (SSO bounce or paywall), and occasional `failed` (publisher quirk). Run on a DOI from a journal your institution actually subscribes to for the highest hit rate. Details below.
 
 ## Requirements
 
@@ -87,6 +99,7 @@ That's the happy path. Details below.
 ## Install
 
 ```powershell
+# Replace <REPO_URL> with this repo's clone URL.
 git clone <REPO_URL>
 cd ref-downloader
 

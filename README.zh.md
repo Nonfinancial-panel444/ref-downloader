@@ -1,8 +1,9 @@
 # ref-downloader
 
-> **别再为综述手动追 50 篇参考文献 PDF。**
+> **别再花一下午追几十篇参考文献 PDF。**
 > 输入一个 DOI，全部参考文献自动到手——用你已有的机构访问权。
 
+[![Version: 0.1.0](https://img.shields.io/badge/version-0.1.0-orange.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 ![Verified on Windows + Edge](https://img.shields.io/badge/verified%20on-Windows%20+%20Edge-success)
@@ -33,12 +34,14 @@ Config:      config.example.toml + config.local.toml
   [ 2] downloaded (1.2 MB)        Wang2018_AdvMater.pdf
   [ 3] manual_pending (auth_redirect)
   [ 4] downloaded (655 KB)        Chen2019_JACS.pdf
-  ... 还有 33 篇 ...
+  [ 5] failed (challenge_timeout)
+  [ 6] ignored (ignored_institution_access)
+  ... 还有 31 篇参考文献处理中 ...
   [38] downloaded (956 KB)        Park2024_JElectrochemSoc.pdf
 
 ========== Download report ==========
 Total references:  38
-Main PDFs:         33 downloaded · 4 manual_pending · 1 ignored
+Main PDFs:         33 downloaded · 3 manual_pending · 1 failed · 1 ignored
 SI files:          12 captured
 PDFs land in:      ./jacs.5c05017_refs/jacs.5c05017/
 =====================================
@@ -47,10 +50,18 @@ PDFs land in:      ./jacs.5c05017_refs/jacs.5c05017/
 ## 目录
 
 - [给你的价值](#给你的价值)
-- [为什么不用 Zotero / scihub / 通用爬虫？](#为什么不用-zotero--scihub--通用爬虫)
-- [快速开始](#快速开始) · [系统要求](#系统要求) · [安装](#安装) · [使用示例](#使用示例)
-- [配置](#配置) · [架构](#架构) · [已支持出版商](#已支持出版商)
-- [已知限制](#已知限制) · [贡献](#贡献) · [安全](#安全) · [License](#license)
+- [为什么不用 Zotero、scihub 或通用爬虫？](#为什么不用-zoteroscihub-或通用爬虫)
+- [快速开始](#快速开始)
+- [系统要求](#系统要求)
+- [安装](#安装)
+- [使用示例](#使用示例)
+- [配置](#配置)
+- [架构](#架构)
+- [已支持出版商](#已支持出版商)
+- [已知限制](#已知限制)
+- [贡献](#贡献)
+- [安全](#安全)
+- [License](#license)
 
 ## 给你的价值
 
@@ -59,7 +70,7 @@ PDFs land in:      ./jacs.5c05017_refs/jacs.5c05017/
 - **失败的条目和原因一目了然。** _`download_report.csv` 给每篇参考文献状态 + 原因（`manual_pending (auth_redirect)`、`failed (challenge_timeout)`、`ignored`），`events.jsonl` 留每篇的事件流。_
 - **断点续跑**：VPN 断、浏览器崩、`Ctrl+C` 后都能继续。 _状态按项目目录持久化；重跑自动跳过已下载、只重试失败。_
 
-## 为什么不用 Zotero / scihub / 通用爬虫？
+## 为什么不用 Zotero、scihub 或通用爬虫？
 
 - **vs. Zotero 的 _Find Available PDF_** —— 它一篇一篇走，碰到 SSO 跳转就放弃。ref-downloader 整个参考列表批量走，把 SSO 跳转当成可配置步骤而不是死路。
 - **vs. scihub 类工具** —— 不带你的机构 license，本来你 _合法_ 有权限的付费内容也直接失败。ref-downloader 复用你浏览器里的认证会话，你已经付费的订阅真的算数。
@@ -68,13 +79,14 @@ PDFs land in:      ./jacs.5c05017_refs/jacs.5c05017/
 ## 快速开始
 
 ```powershell
+# 把 <REPO_URL> 换成本仓库的 clone URL
 git clone <REPO_URL> && cd ref-downloader
 pip install -r requirements.txt && playwright install msedge
 cp config.example.toml config.local.toml      # 然后改 [crossref].mailto
 python run_ref_downloader.py 10.1021/jacs.5c05017
 ```
 
-这是 happy path。详细安装与配置见下方。
+预期看到：化学/物理论文一般 30-80 篇参考文献被发现，状态混合 `downloaded`（你机构覆盖的）、`manual_pending`（SSO 跳转或付费墙）、偶尔 `failed`（出版商怪癖）。建议第一次跑用一篇你机构实际订阅期刊的 DOI，命中率最高。详细安装与配置见下方。
 
 ## 系统要求
 
@@ -87,6 +99,7 @@ python run_ref_downloader.py 10.1021/jacs.5c05017
 ## 安装
 
 ```powershell
+# 把 <REPO_URL> 换成本仓库的 clone URL
 git clone <REPO_URL>
 cd ref-downloader
 
