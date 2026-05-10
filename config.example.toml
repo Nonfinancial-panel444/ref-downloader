@@ -1,0 +1,51 @@
+# Copy this file to config.local.toml and edit. config.local.toml is gitignored.
+# Environment variables (REF_DOWNLOADER_*) override these values.
+
+[crossref]
+# Crossref polite-pool identifier. Replace with your email — helps API priority.
+# If left as the placeholder, the wrapper prints a warning at startup.
+mailto = "your.email@example.com"
+
+[zotero]
+# Optional: Zotero SQLite path. If set + file exists, the wrapper resolves DOI
+# from a PDF filename via Zotero metadata (faster than the fitz fallback).
+# Leave empty "" to disable. fitz fallback still works for any PDF.
+# Examples:
+#   Windows: db_path = "D:\\YourName\\Documents\\Zotero\\zotero.sqlite"
+#   macOS:   db_path = "/Users/you/Zotero/zotero.sqlite"
+#   Linux:   db_path = "/home/you/Zotero/zotero.sqlite"
+db_path = ""
+
+[browser]
+# Edge persistent profile directory.
+# Empty = OS default (Windows: %LOCALAPPDATA%\Microsoft\Edge\User Data)
+# This tool launches that profile, so close all Edge windows before running.
+edge_profile_dir = ""
+# Set to true to launch Edge with extensions disabled (useful for debugging
+# extension-induced page-load issues).
+disable_extensions = false
+
+[institution]
+# Optional: institutional SSO patterns.
+# Leave all lists empty for vanilla open-internet use (no SSO at your org).
+# Adding your university's SSO host/title enables auth-redirect detection during
+# downloads, so the script knows when a paywalled link bounced you to login
+# instead of treating that as a failed PDF.
+#
+# Example for a university with SSO:
+#   auth_hosts          = ["sso.your-uni.edu", "idp.your-uni.edu"]
+#   auth_url_fragments  = ["oauth", "saml", "shibboleth"]
+#   auth_page_titles    = ["Your University Single Sign-On"]
+#   auth_loading_titles = []
+#   ignored_access_dois = ["10.xxxx/yyyyy"]   # DOIs you know are paywalled
+#
+# NOTE: auth_loading_titles is ALSO consumed by the AIP/AVS publisher
+# loading-page detection path (it shares the same "Please wait" string detection
+# as some SSO loading pages). The script also bakes in a small AIP/AVS-specific
+# string that should not be removed; only add entries here if your institution
+# has SSO loading text not already covered.
+auth_hosts          = []
+auth_url_fragments  = []
+auth_page_titles    = []
+auth_loading_titles = []
+ignored_access_dois = []
