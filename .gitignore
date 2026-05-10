@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Local config (user-specific, never commit)
+config.local.toml
+
+# Runtime artifacts
+runs/
+*_refs/
+test_smoke/
+events.jsonl
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Output reports
+download_report.csv
+postmortem.md

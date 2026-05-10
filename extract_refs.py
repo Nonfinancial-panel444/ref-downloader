@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""
+Script 1: Extract reference DOIs from a parent paper via Crossref API.
+
+Usage:
+  python extract_refs.py <parent_doi>
+
+Example:
+  python extract_refs.py 10.1021/jacs.5c05017
+
+Output:
+  {project_dir}/refs_raw.json
+"""
+
+import sys
+import json
+import urllib.request
+import urllib.error
+from pathlib import Path
+from datetime import datetime
+
+
+API_BASE = "https://api.crossref.org/works"
+USER_AGENT = "RefDownloader/1.0 (mailto:academic-tool@example.com)"
+
+
+def doi_to_project_name(doi: str) -> str:
+    """Convert DOI to a safe directory name using the suffix after the last '/'."""
+    return doi.split("/")[-1].replace(":", "_").replace("?", "_")
+
+
+def fetch_crossref(doi: str) -> dict:
+    """Fetch metadata for a single DOI from Crossref API."""
+    url = f"{API_BASE}/{urllib.request.quote(doi, safe='')}"
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read())["message"]
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            print(f"  ERROR: DOI not found in Crossref: {doi}")
+            return {}
+        raise
+
+
+def extract_references(parent_doi: str) -> dict:
+    """Extract reference list from a parent paper's Crossref entry."""
+    print(f"Fetching parent paper: {parent_doi}")
+    parent = fetch_crossref(parent_doi)
+
+    if not parent:
+        print("ERROR: Parent DOI not found in Crossref.")
+        sys.exit(1)
+
+    title = parent.get("title", ["(no title)"])[0]
+    refs_raw = parent.get("reference", [])
+
+    print(f"  Title: {title}")
+    print(f"  References found: {len(refs_raw)}")
+
+    if not refs_raw:
+        print("ERROR: No references found. The publisher may not deposit reference metadata.")
+        sys.exit(1)
+
+    references = []
+    no_doi_count = 0
+    for i, ref in enumerate(refs_raw, 1):
+        doi = ref.get("DOI")
+        if not doi:
+            no_doi_count += 1
+            print(f"  WARNING: ref [{i}] has no DOI — {ref.get('unstructured', '(no info)')[:80]}")
+        references.append({
+            "id": i,
+            "doi": doi,
+            "key": ref.get("key", ""),
+            "unstructured": ref.get("unstructured", ""),
+            "author": ref.get("author", ""),
+            "year": ref.get("year", ""),
+            "journal": ref.get("journal-title", ""),
+            "volume": ref.get("volume", ""),
+            "first_page": ref.get("first-page", ""),
+        })
+
+    print(f"\n  Summary: {len(references)} refs total, "
+          f"{len(references) - no_doi_count} with DOI, {no_doi_count} without DOI")
+
+    return {
+        "parent_doi": parent_doi,
+        "parent_title": title,
+        "extracted_at": datetime.now().isoformat(timespec="seconds"),
+        "total": len(references),
+        "with_doi": len(references) - no_doi_count,
+        "without_doi": no_doi_count,
+        "references": references,
+    }
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python extract_refs.py <parent_doi>")
+        print("Example: python extract_refs.py 10.1021/jacs.5c05017")
+        sys.exit(1)
+
+    parent_doi = sys.argv[1].strip()
+    project_name = doi_to_project_name(parent_doi)
+    project_dir = Path(project_name)
+    output_path = project_dir / "refs_raw.json"
+
+    # Incremental: check if output already exists
+    if output_path.exists():
+        print(f"WARNING: {output_path} already exists.")
+        answer = input("  Overwrite? [y/N] ").strip().lower()
+        if answer != "y":
+            print("Aborted.")
+            sys.exit(0)
+
+    # Create project directory
+    project_dir.mkdir(exist_ok=True)
+    print(f"Project directory: {project_dir}/\n")
+
+    # Extract
+    result = extract_references(parent_doi)
+
+    # Save
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+
+    print(f"\n✓ Saved to {output_path}")
+    print(f"  Next step: python validate_refs.py {project_name}")
+
+
+if __name__ == "__main__":
+    main()
