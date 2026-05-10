@@ -29,9 +29,10 @@ configuration.
 - Non-interactive mode: `--yes` flag and tty-detection in `extract_refs.py`
 - Per-field environment variable overrides (`REF_DOWNLOADER_MAILTO`,
   `_ZOTERO_DB`, `_EDGE_PROFILE`, `_DISABLE_EXTENSIONS`, `_CONFIG`)
-- Bilingual highlights table at the top of `README.md` and `README.zh.md`
-  surfacing the 8 most distinctive capabilities at a glance, mirrored
-  row-for-row between languages
+- Bilingual highlights table at the top of `README.md` and `README.zh.md`,
+  framed as user-value-first ("what you get — *how it's distinctively
+  delivered*"). 5 rows, mirrored row-for-row between languages, scannable
+  in seconds.
 
 ### Publishers
 
