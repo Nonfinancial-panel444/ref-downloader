@@ -14,14 +14,10 @@ from __future__ import annotations
 
 import os
 import sys
+import tomllib
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import List, Optional
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib  # type: ignore
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 EXAMPLE_TOML = PACKAGE_DIR / "config.example.toml"

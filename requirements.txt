@@ -1,7 +1,9 @@
 # Required runtime
 playwright>=1.40
 
-# Optional: PDF text fallback for DOI extraction when Zotero lookup is
-# unavailable or returns no result. Without this, the wrapper still works
-# for DOI input and for PDFs whose DOI is in Zotero metadata.
+# Optional. Used for DOI extraction from PDF text when:
+#   - Input is a PDF, AND
+#   - [zotero].db_path is not configured / Zotero lookup returned empty
+# If you only feed DOIs, or your PDFs are all in Zotero with DOI metadata,
+# skip this. Comment out the next line in that case.
 pymupdf>=1.23
