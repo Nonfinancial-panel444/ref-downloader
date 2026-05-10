@@ -26,9 +26,10 @@ import time
 from pathlib import Path
 from typing import Optional
 
+from _config import load_config, warn_if_placeholder_mailto
+
 
 SKILL_DIR = Path(__file__).resolve().parent
-ZOTERO_DB = Path(r"D:\Link\Documents\Zotero\zotero.sqlite")
 LEGACY_ROOT_FILENAMES = (
     "fetch_refs.py",
     "fetch_refs_playwright.py",
@@ -47,12 +48,12 @@ def doi_to_project_name(doi: str) -> str:
     return re.sub(r'[<>:"/\\|?*]+', "_", suffix).strip(" .") or "unnamed_project"
 
 
-def resolve_doi_from_zotero(pdf_path: Path) -> str:
-    if not ZOTERO_DB.exists():
+def resolve_doi_from_zotero(pdf_path: Path, zotero_db: Path) -> str:
+    if not zotero_db or not zotero_db.exists():
         return ""
     tmp_db = Path(tempfile.mktemp(suffix=".sqlite"))
     try:
-        shutil.copy2(ZOTERO_DB, tmp_db)
+        shutil.copy2(zotero_db, tmp_db)
         conn = sqlite3.connect(tmp_db)
         try:
             row = conn.execute(
@@ -99,7 +100,7 @@ def resolve_doi_from_pdf_text(pdf_path: Path) -> str:
         return ""
 
 
-def resolve_input(input_value: str, output_dir_arg: str = "") -> tuple[str, Path, str]:
+def resolve_input(input_value: str, output_dir_arg: str, zotero_db: Path) -> tuple[str, Path, str]:
     raw = input_value.strip()
     if looks_like_doi(raw):
         doi = raw
@@ -111,7 +112,7 @@ def resolve_input(input_value: str, output_dir_arg: str = "") -> tuple[str, Path
     if not pdf_path.exists() or pdf_path.suffix.lower() != ".pdf":
         raise SystemExit(f"ERROR: Input is neither a DOI nor an existing PDF path:\n  {raw}")
 
-    doi = resolve_doi_from_zotero(pdf_path) or resolve_doi_from_pdf_text(pdf_path)
+    doi = resolve_doi_from_zotero(pdf_path, zotero_db) or resolve_doi_from_pdf_text(pdf_path)
     if not doi:
         raise SystemExit(
             "ERROR: Unable to resolve DOI automatically from the PDF.\n"
@@ -158,12 +159,28 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="Override OUTPUT_DIR. By default: DOI -> <cwd>/<project_name>_refs, PDF -> sibling <pdf_stem>_refs",
     )
+    parser.add_argument(
+        "--config",
+        default="",
+        help="Path to alternate TOML config file (overrides config.local.toml).",
+    )
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Non-interactive mode: assume yes to overwrite prompts. Use for CI / batch runs.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    doi, output_dir, project_name = resolve_input(args.input, args.output_dir)
+
+    config_path = Path(args.config) if args.config else None
+    cfg = load_config(config_path)
+    warn_if_placeholder_mailto(cfg)
+
+    zotero_db = Path(cfg.zotero.db_path).expanduser() if cfg.zotero.db_path else Path("")
+    doi, output_dir, project_name = resolve_input(args.input, args.output_dir, zotero_db)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     project_dir = output_dir / project_name
@@ -174,11 +191,15 @@ def main() -> None:
     print(f"OUTPUT_DIR:  {output_dir}")
     print(f"PROJECT:     {project_name}")
     print(f"Python:      {sys.executable}")
+    if cfg.source_files:
+        print(f"Config:      {' + '.join(cfg.source_files)}")
+
+    extra_args = ["--yes"] if args.yes else []
 
     if raw_path.exists():
         print(f"\n>>> Reusing existing raw refs: {raw_path}")
     else:
-        run_step("extract_refs.py", [doi], output_dir)
+        run_step("extract_refs.py", [doi, *extra_args], output_dir)
 
     run_step("validate_refs.py", [project_name], output_dir)
     run_step("download_refs.py", [project_name], output_dir)
