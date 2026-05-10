@@ -14,6 +14,11 @@ runs/
 *_refs/
 test_smoke/
 events.jsonl
+# Per-project output dirs from extract/validate. The <doi-suffix>/ folder
+# `extract_refs.py` creates relative to cwd doesn't have the `_refs` suffix
+# the wrapper uses, so we catch its contents by filename instead.
+refs_raw.json
+refs_validated.json
 
 # Editor
 .vscode/

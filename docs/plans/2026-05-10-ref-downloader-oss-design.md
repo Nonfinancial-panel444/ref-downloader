@@ -259,8 +259,8 @@ Specifically: rerun Gate 1 grep, eyeball `git diff --stat`, confirm
 
 | Reviewer | Findings unique to them |
 |---|---|
-| Plan-agent | Symlink discovery; institution PII at 1123/1132/1251/1260 + 119-122; EDGE_USER_DATA module-level (line 78); blocking `input()` at extract_refs.py:112; env var fallback recommendation; SECURITY.md recommendation; "if you can change one thing" → sanitize PKU |
+| Plan-agent | Symlink discovery; institution PII at 1123/1132/1251/1260 + 119-122; EDGE_USER_DATA module-level (line 78); blocking `input()` at extract_refs.py:112; env var fallback recommendation; SECURITY.md recommendation; "if you can change one thing" → sanitize institution-specific identifiers |
 | Kimi (narrow) | Three additional institution-specific strings at 736 / 1509 / 2205 (outside the main block); confirmed no other module-level constants need lazy-load; flagged auth_loading_titles ambiguity (institution + AIP/AVS share the string) |
-| Self-grep | Confirmed no Drive-letter paths beyond known ones; no personal email/username in `.py`; identified additional URL fragment `iaaa/oauth` at 1127 and `oauth.jsp` at 1128 |
+| Self-grep | Confirmed no Drive-letter paths beyond known ones; no personal email/username in `.py`; identified additional URL fragment `<institution-oauth>` at 1127 and `oauth.jsp` at 1128 |
 
 All findings consolidated into §3 above.

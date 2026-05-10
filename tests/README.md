@@ -55,6 +55,56 @@ What MUST NOT happen:
 - `KeyError` / `NoneType` from a missing config field
 - Personal paths (e.g. `C:\Users\<you>\...`) appearing in any traceback
 
+## Malformed-config robustness test
+
+The config layer should warn and degrade gracefully on malformed TOML, never
+crash mid-run. Create a `bad-config.toml`:
+
+```toml
+[crossref]
+mailto = "test@example.com"
+
+[institution]
+auth_hosts = ["valid", 123, true, "another"]   # mixed types — non-strings dropped
+auth_page_titles = "should_be_list_not_string"  # wrong type — ignored entirely
+```
+
+Run:
+
+```powershell
+python run_ref_downloader.py 10.1021/jacs.5c05017 --config bad-config.toml --output-dir test_smoke
+```
+
+Expected stderr WARNINGs (one per malformed field), then normal extract+validate
+flow. The script should NOT raise `TypeError: 'in <string>' requires string`
+mid-download — that was a pre-fix bug.
+
+## --auto / --yes flag round-trip
+
+The wrapper's `--auto` and `--yes` should propagate to the right child scripts:
+
+```powershell
+python run_ref_downloader.py 10.1021/jacs.5c05017 --yes --auto --output-dir test_smoke
+```
+
+Expected:
+- `extract_refs.py` receives `--yes` (visible in the `>>> Running:` log line)
+- `download_refs.py` receives `--auto` (visible in the `>>> Running:` log line)
+- No `unrecognized arguments` error
+
+## Cross-platform: macOS / Linux
+
+Currently UNTESTED. The script will refuse to run `download_refs.py` on
+non-Windows without an explicit `[browser].edge_profile_dir` setting:
+
+```
+ERROR: No Edge profile directory configured.
+  This tool's auto-default for the Edge profile only works on Windows.
+  ...
+```
+
+If you run on macOS / Linux and the error is unclear, please file an issue.
+
 ## Quick import-only check
 
 If you've changed structure and want to verify without running a full

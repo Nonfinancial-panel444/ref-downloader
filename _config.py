@@ -75,11 +75,49 @@ def _merge_dict(base: dict, overlay: dict) -> dict:
     return base
 
 
+def _coerce_section(data: dict, key: str) -> dict:
+    """Return data[key] if it is a dict, else empty dict + warn on stderr."""
+    value = data.get(key, {})
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        print(
+            f"WARNING: config section [{key}] is {type(value).__name__}, expected a table; ignoring.",
+            file=sys.stderr,
+        )
+        return {}
+    return value
+
+
+def _coerce_str_list(section: dict, key: str, section_name: str) -> List[str]:
+    """Pull section[key] as a list of strings; drop non-strings + warn."""
+    raw = section.get(key, []) or []
+    if not isinstance(raw, list):
+        print(
+            f"WARNING: config field [{section_name}].{key} is {type(raw).__name__}, expected a list; ignoring.",
+            file=sys.stderr,
+        )
+        return []
+    out: List[str] = []
+    dropped = 0
+    for item in raw:
+        if isinstance(item, str):
+            out.append(item)
+        else:
+            dropped += 1
+    if dropped:
+        print(
+            f"WARNING: config field [{section_name}].{key} had {dropped} non-string entries; ignored.",
+            file=sys.stderr,
+        )
+    return out
+
+
 def _build_from_dict(data: dict, source_files: List[str]) -> Config:
-    crossref = data.get("crossref", {}) or {}
-    zotero = data.get("zotero", {}) or {}
-    browser = data.get("browser", {}) or {}
-    institution = data.get("institution", {}) or {}
+    crossref = _coerce_section(data, "crossref")
+    zotero = _coerce_section(data, "zotero")
+    browser = _coerce_section(data, "browser")
+    institution = _coerce_section(data, "institution")
     return Config(
         crossref=CrossrefConfig(
             mailto=str(crossref.get("mailto", PLACEHOLDER_MAILTO)),
@@ -92,11 +130,11 @@ def _build_from_dict(data: dict, source_files: List[str]) -> Config:
             disable_extensions=bool(browser.get("disable_extensions", False)),
         ),
         institution=InstitutionConfig(
-            auth_hosts=list(institution.get("auth_hosts", []) or []),
-            auth_url_fragments=list(institution.get("auth_url_fragments", []) or []),
-            auth_page_titles=list(institution.get("auth_page_titles", []) or []),
-            auth_loading_titles=list(institution.get("auth_loading_titles", []) or []),
-            ignored_access_dois=list(institution.get("ignored_access_dois", []) or []),
+            auth_hosts=_coerce_str_list(institution, "auth_hosts", "institution"),
+            auth_url_fragments=_coerce_str_list(institution, "auth_url_fragments", "institution"),
+            auth_page_titles=_coerce_str_list(institution, "auth_page_titles", "institution"),
+            auth_loading_titles=_coerce_str_list(institution, "auth_loading_titles", "institution"),
+            ignored_access_dois=_coerce_str_list(institution, "ignored_access_dois", "institution"),
         ),
         source_files=source_files,
     )

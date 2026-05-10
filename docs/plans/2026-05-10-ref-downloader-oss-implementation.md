@@ -869,11 +869,11 @@ Replace with:
         return {"kind": "auth_redirect", "reason": "institution_auth_redirect", "url": page.url}
 ```
 
-- [ ] **Step 6: Update inline `"统一身份认证"` checks at lines 1509 + 2205**
+- [ ] **Step 6: Update inline institution-SSO-title substring checks at lines 1509 + 2205**
 
-**Line 1509** — currently:
+**Line 1509** — currently (with the original literal SSO title redacted):
 ```python
-    if "统一身份认证" in decoded:
+    if "<institution-sso-page-title>" in decoded:
         return False, "auth_page_instead_of_pdf"
 ```
 
@@ -883,11 +883,11 @@ Replace with:
         return False, "auth_page_instead_of_pdf"
 ```
 
-**Line 2205** — currently:
+**Line 2205** — currently (literal SSO title redacted):
 ```python
 def body_looks_like_html(body: bytes) -> bool:
     head = body[:2048].decode("utf-8", errors="ignore").lower()
-    return "<html" in head or "<!doctype" in head or "统一身份认证" in head
+    return "<html" in head or "<!doctype" in head or "<institution-sso-page-title>" in head
 ```
 
 Replace with:

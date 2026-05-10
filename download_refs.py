@@ -48,46 +48,82 @@ from urllib.parse import unquote, urljoin, urlparse
 
 from playwright.async_api import BrowserContext, Page, async_playwright, Error as PlaywrightError
 
+from functools import lru_cache
+
 from _config import load_config, InstitutionConfig
 
 # Institution-specific patterns are loaded from config.local.toml at startup
 # via init_institution_config(). Stays empty for vanilla open-internet use.
+# The 5 getters below are @lru_cache(1) for two reasons:
+#   - eliminate per-ref tuple/set rebuild in hot loops
+#   - align with the "set-once at startup" contract — caches are explicitly
+#     cleared in init_institution_config() so re-init still works.
 _INSTITUTION: InstitutionConfig = InstitutionConfig()
 
 
 def init_institution_config(cfg_institution: InstitutionConfig) -> None:
-    """Set institution patterns from config; called once from main()."""
+    """Set institution patterns from config; called once from main().
+
+    Also clears the lru_caches on the 5 getters + get_edge_user_data_dir
+    so that any read AFTER this call sees the new values. Pre-init reads
+    (which would be a bug) get cached against the empty default until init
+    fires; init then invalidates them.
+    """
     global _INSTITUTION
     _INSTITUTION = cfg_institution
+    _auth_hosts.cache_clear()
+    _auth_url_fragments.cache_clear()
+    _auth_page_titles.cache_clear()
+    _auth_loading_titles.cache_clear()
+    ignored_institution_access_dois.cache_clear()
+    get_edge_user_data_dir.cache_clear()
 
 
+@lru_cache(maxsize=1)
 def get_edge_user_data_dir() -> str:
     """Resolve Edge profile dir at call time. Order:
         1. config.browser.edge_profile_dir if non-empty
         2. %LOCALAPPDATA%\\Microsoft\\Edge\\User Data (Windows default)
+
+    On non-Windows OSes there is no built-in default — the user must set
+    config.browser.edge_profile_dir or REF_DOWNLOADER_EDGE_PROFILE.
     """
     cfg = load_config()
     if cfg.browser.edge_profile_dir:
         return cfg.browser.edge_profile_dir
+    if sys.platform != "win32":
+        raise SystemExit(
+            "ERROR: No Edge profile directory configured.\n"
+            "  This tool's auto-default for the Edge profile only works on Windows.\n"
+            "  On macOS/Linux you must set one of:\n"
+            "    - browser.edge_profile_dir in config.local.toml\n"
+            "    - REF_DOWNLOADER_EDGE_PROFILE environment variable\n"
+            "  See README.md and config.example.toml for details."
+        )
     return os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\User Data")
 
 
-def ignored_institution_access_dois() -> set:
-    return set(_INSTITUTION.ignored_access_dois)
+@lru_cache(maxsize=1)
+def ignored_institution_access_dois() -> frozenset:
+    return frozenset(_INSTITUTION.ignored_access_dois)
 
 
+@lru_cache(maxsize=1)
 def _auth_hosts() -> tuple:
     return tuple(_INSTITUTION.auth_hosts)
 
 
+@lru_cache(maxsize=1)
 def _auth_url_fragments() -> tuple:
     return tuple(_INSTITUTION.auth_url_fragments)
 
 
+@lru_cache(maxsize=1)
 def _auth_page_titles() -> tuple:
     return tuple(_INSTITUTION.auth_page_titles)
 
 
+@lru_cache(maxsize=1)
 def _auth_loading_titles() -> tuple:
     return tuple(_INSTITUTION.auth_loading_titles)
 

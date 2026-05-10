@@ -159,6 +159,25 @@ prompts you for the minimum useful info:
 - Keep public interfaces of `_config.py` stable — all four scripts depend on
   the `Config` dataclass shape.
 
+## CLI behavior nuances
+
+A few things that look inconsistent on first read but are intentional:
+
+- **Only `extract_refs.py` prompts on overwrite.** `validate_refs.py` and
+  `download_refs.py` always overwrite their outputs (`refs_validated.json` and
+  `download_report.csv` respectively) without asking — both are derived
+  artifacts that should be safe to regenerate. The `--yes` flag is only
+  meaningful for `extract_refs.py`. The wrapper exposes `--yes` (forwards to
+  extract) and `--auto` (forwards to download for headless-like behavior) as
+  the two non-interactive levers.
+
+- **Running `extract_refs.py` standalone creates `<doi-suffix>/` next to your
+  cwd without the `_refs` suffix.** The wrapper appends `_refs` itself; the
+  underlying script doesn't. If you run `python extract_refs.py 10.x/y` from
+  the repo root you'll get a bare `y/` directory there. `.gitignore` catches
+  the JSON output files inside, but not the directory shell. Either run from a
+  scratch dir, or use the wrapper.
+
 ## Testing
 
 There's no automated test suite yet. See [tests/README.md](tests/README.md)
