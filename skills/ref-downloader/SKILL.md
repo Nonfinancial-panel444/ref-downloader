@@ -21,12 +21,12 @@ The skill protocol can't manage Python deps. If `python -c "import playwright"` 
 
 ```bash
 cd "<SKILL_DIR>"
-pip install -r requirements.txt   # playwright + (optional) pymupdf
+pip install playwright pymupdf
 playwright install msedge          # downloads Edge driver
 cp config.example.toml config.local.toml   # then user edits [crossref].mailto
 ```
 
-`requirements.txt` is at the repo root in the source tree; if the user copied only `skills/ref-downloader/`, point them at the source repo to get `requirements.txt` and `requirements-dev.txt`, or run `pip install playwright pymupdf` directly.
+If the user is developing from the source repo instead of an installed skill copy, they can also install from the repo root with `pip install -r requirements.txt -r requirements-dev.txt`.
 
 ## When to invoke
 

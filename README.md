@@ -94,7 +94,7 @@ git clone <REPO_URL>
 #   Project-local:      cp -r ref-downloader/skills/ref-downloader .agents/skills/
 
 cd ~/.claude/skills/ref-downloader     # or wherever you copied it
-pip install -r ../../../ref-downloader/requirements.txt   # path back to source
+pip install playwright pymupdf
 playwright install msedge
 cp config.example.toml config.local.toml      # then set [crossref].mailto
 
@@ -224,7 +224,7 @@ Environment variables override file values:
 | `REF_DOWNLOADER_DISABLE_EXTENSIONS` | `browser.disable_extensions` (`1`/`true` to enable) |
 | `REF_DOWNLOADER_CONFIG` | Path to alternate TOML file |
 
-See [`config.example.toml`](config.example.toml) for full documentation.
+See [`skills/ref-downloader/config.example.toml`](skills/ref-downloader/config.example.toml) for full documentation.
 
 ## Architecture
 

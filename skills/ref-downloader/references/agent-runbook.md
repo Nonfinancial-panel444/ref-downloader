@@ -11,7 +11,7 @@
 `~/.claude/skills/ref-downloader/` etc. after install). Python scripts live in
 `<SKILL_DIR>/scripts/`; config files (`config.example.toml`,
 `config.local.toml`) live at `<SKILL_DIR>/`. All commands below assume the
-user has installed prereqs once (`pip install -r requirements.txt &&
+user has installed prereqs once (`pip install playwright pymupdf &&
 playwright install msedge`).
 
 ---

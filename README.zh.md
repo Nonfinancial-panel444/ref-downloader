@@ -224,7 +224,7 @@ python <SKILL_DIR>/scripts/run_ref_downloader.py 10.1021/jacs.5c05017 --config .
 | `REF_DOWNLOADER_DISABLE_EXTENSIONS` | `browser.disable_extensions`（`1`/`true` 启用） |
 | `REF_DOWNLOADER_CONFIG` | 备选 TOML 路径 |
 
-完整文档参考 [`config.example.toml`](config.example.toml)。
+完整文档参考 [`skills/ref-downloader/config.example.toml`](skills/ref-downloader/config.example.toml)。
 
 ## 架构
 
