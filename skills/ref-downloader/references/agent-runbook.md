@@ -1,11 +1,14 @@
 # Agent Runbook — Extended Manual Flow
 
-> This is the **expanded** version of [SKILL.md](../SKILL.md): the 8-step manual
+> This is the **expanded** version of [../SKILL.md](../SKILL.md): the 8-step manual
 > three-script flow, full DOI-resolution fallback chain, and `PUBLISHER_MAP`
 > extension procedure. SKILL.md covers the slim happy path; this file covers
 > "what to do when the happy path breaks".
 >
-> Audience: Claude Code agent (or human contributor) needing to debug or extend.
+> Audience: agent mode (or human contributor) needing to debug or extend.
+
+`<REPO_ROOT>` = the repository root two directories above `skills/ref-downloader/`.
+All Python commands below run scripts from `<REPO_ROOT>`.
 
 ---
 
@@ -155,7 +158,7 @@ Notes:
 
 ```bash
 cd "<OUTPUT_DIR>"
-python "<SKILL_DIR>/extract_refs.py" <DOI>
+python "<REPO_ROOT>/extract_refs.py" <DOI>
 ```
 
 **Expected**: `<PROJECT_NAME>/refs_raw.json` created; console prints reference count.
@@ -175,7 +178,7 @@ python "<SKILL_DIR>/extract_refs.py" <DOI>
 
 ```bash
 cd "<OUTPUT_DIR>"
-python "<SKILL_DIR>/validate_refs.py" <PROJECT_NAME>
+python "<REPO_ROOT>/validate_refs.py" <PROJECT_NAME>
 ```
 
 **Expected**: `refs_validated.json` created; console shows `Verified: X / Failed: Y / No DOI: Z`.
@@ -215,7 +218,7 @@ with urllib.request.urlopen(req, timeout=15) as r:
     print(f"  {prefix} → {publisher_name}")
 ```
 
-Map publisher name to the internal key (see table) and update `PUBLISHER_MAP` in `<SKILL_DIR>/validate_refs.py`:
+Map publisher name to the internal key (see table) and update `PUBLISHER_MAP` in `<REPO_ROOT>/validate_refs.py`:
 
 | Publisher name contains | Internal key |
 |---|---|
@@ -233,10 +236,10 @@ After updating `PUBLISHER_MAP`, **re-run** `validate_refs.py` (incremental: only
 
 ```bash
 cd "<OUTPUT_DIR>"
-python "<SKILL_DIR>/validate_refs.py" <PROJECT_NAME>
+python "<REPO_ROOT>/validate_refs.py" <PROJECT_NAME>
 ```
 
-Also: if `download_refs.py` lacks a `direct_pdf_url` template or `PDF_SELECTORS` entry for the new publisher, add reasonable defaults (use `doi.org/{doi}` for article URL, `a:has-text("PDF")` as a selector fallback). See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full add-publisher workflow.
+Also: if `download_refs.py` lacks a `direct_pdf_url` template or `PDF_SELECTORS` entry for the new publisher, add reasonable defaults (use `doi.org/{doi}` for article URL, `a:has-text("PDF")` as a selector fallback). See [CONTRIBUTING.md](../../../CONTRIBUTING.md) for the full add-publisher workflow.
 
 ---
 
@@ -244,7 +247,7 @@ Also: if `download_refs.py` lacks a `direct_pdf_url` template or `PDF_SELECTORS`
 
 ```bash
 cd "<OUTPUT_DIR>"
-python "<SKILL_DIR>/download_refs.py" <PROJECT_NAME>
+python "<REPO_ROOT>/download_refs.py" <PROJECT_NAME>
 ```
 
 **Default mode is interactive**; do not prepend `--auto` blindly.
@@ -332,7 +335,7 @@ Patterns cleaned (if present):
 Cleanup rules:
 - Only the `OUTPUT_DIR` itself, no recursion into subdirs
 - `.bak` files are preserved (likely user backups)
-- Nothing in `<SKILL_DIR>` is touched
+- Nothing in `<REPO_ROOT>` is touched
 - Manual three-script invocations skip this step by default
 
 ---
@@ -343,16 +346,16 @@ Cleanup rules:
 |---|---|
 | `No references found` | Crossref didn't deposit reference metadata for that publisher's record; tool can't auto-extract. Tell user. |
 | Edge won't launch | Make sure Edge is fully closed (including background `msedge.exe` in Task Manager); re-run Step 6 |
-| Many `manual_pending` | VPN / campus network not connected, or publisher requires SSO. See [CONTRIBUTING.md](../CONTRIBUTING.md) `[institution]` section for SSO host configuration. |
+| Many `manual_pending` | VPN / campus network not connected, or publisher requires SSO. See [CONTRIBUTING.md](../../../CONTRIBUTING.md) `[institution]` section for SSO host configuration. |
 | Root `download_report.csv` looks stale | If the run was interrupted, use the latest `runs/<timestamp>/events.jsonl` + the project directory's actual files. |
 | Many `failed` in `validated.json` | Transient Crossref API failure; re-run Step 5 (incremental skips already-verified). |
 | Zotero lookup returns nothing for a PDF | Confirm `[zotero].db_path` points to the right `zotero.sqlite`; fall back to fitz text extraction; if both fail, ask user for the DOI manually. |
-| `WARNING: crossref.mailto is the placeholder` | Edit `<SKILL_DIR>/config.local.toml` and set `[crossref].mailto` to a real email to enter Crossref polite pool. |
+| `WARNING: crossref.mailto is the placeholder` | Edit `<REPO_ROOT>/config.local.toml` and set `[crossref].mailto` to a real email to enter Crossref polite pool. |
 
 ## See also
 
 - [../SKILL.md](../SKILL.md) — slim agent entry; trigger conditions and primary entry command
-- [../README.md](../README.md) — human-facing setup and usage
-- [SUPPORTED_PUBLISHERS.md](SUPPORTED_PUBLISHERS.md) — per-publisher download strategy + maturity tier
-- [../CONTRIBUTING.md](../CONTRIBUTING.md) — adding a new publisher / institution SSO patterns
-- [../config.example.toml](../config.example.toml) — full config schema
+- [../../../README.md](../../../README.md) — human-facing setup and usage
+- [../../../docs/SUPPORTED_PUBLISHERS.md](../../../docs/SUPPORTED_PUBLISHERS.md) — per-publisher download strategy + maturity tier
+- [../../../CONTRIBUTING.md](../../../CONTRIBUTING.md) — adding a new publisher / institution SSO patterns
+- [../../../config.example.toml](../../../config.example.toml) — full config schema

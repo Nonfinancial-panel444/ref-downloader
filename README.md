@@ -190,7 +190,9 @@ run_ref_downloader.py   # entry point — config loading, DOI resolution, sequen
   └─> download_refs.py    (3) Playwright/Edge: download main PDF + SI per publisher
 ```
 
-You can also run the three scripts manually for debugging or partial restarts. See [SKILL.md](SKILL.md) for the manual flow.
+You can also run the three scripts manually for debugging or partial restarts. See the agent runbook in [`skills/ref-downloader/references/agent-runbook.md`](skills/ref-downloader/references/agent-runbook.md) for the manual flow.
+
+Agent users can install or inspect the packaged skill at [`skills/ref-downloader/SKILL.md`](skills/ref-downloader/SKILL.md). The repository root remains the human-facing Python project; the skill bundle is kept separate so Codex does not treat README, changelog, tests, and source files as always-associated skill context.
 
 ## Supported publishers
 

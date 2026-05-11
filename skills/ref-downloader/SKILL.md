@@ -1,22 +1,20 @@
 ---
 name: ref-downloader
 description: >
-  批量下载一篇论文在 Crossref 上登记的全部参考文献 PDF。输入一个 DOI 或一份含 DOI 的 PDF，
-  工具通过 Microsoft Edge 持久 profile 自动跑 extract → validate → download 三阶段流水线，
-  按出版商专用策略下载主文与 SI，输出 per-reference status CSV + events.jsonl。
-  触发场景：用户说"帮我下载这篇文献的参考文献"、"批量下载引用文献"、
-  "把这篇论文的所有引用都下载下来"、或提供 PDF 路径/DOI 要求下载全部参考文献。
+  Use when the user asks to batch-download all references for a paper from a
+  DOI or local PDF with ref-downloader. Not for one-off PDFs, paper search, or
+  Zotero import.
 ---
 
 # Ref Downloader — Agent Runbook
 
-> Slim entry for Claude Code agent mode. The full 8-step manual runbook with code
+> Slim entry for agent mode. The full 8-step manual runbook with code
 > snippets, DOI-resolution fallback chain, and PUBLISHER_MAP extension procedure
-> lives in [docs/agent-runbook.md](docs/agent-runbook.md). Human users see
-> [README.md](README.md).
+> lives in [references/agent-runbook.md](references/agent-runbook.md). Human users see
+> [../../README.md](../../README.md).
 
-`<SKILL_DIR>` in this file = the directory containing this `SKILL.md`. Resolve via
-`Path(__file__).resolve().parent` from any script.
+`<SKILL_DIR>` = this folder (`skills/ref-downloader`). `<REPO_ROOT>` = two
+directories up from this file. Run the actual Python scripts from `<REPO_ROOT>`.
 
 ## When to invoke
 
@@ -33,7 +31,7 @@ description: >
 ## Primary entry
 
 ```bash
-python "<SKILL_DIR>/run_ref_downloader.py" <DOI_OR_PDF_PATH>
+python "<REPO_ROOT>/run_ref_downloader.py" <DOI_OR_PDF_PATH>
 ```
 
 The wrapper handles DOI resolution (Zotero → fitz fallback), output-dir layout,
@@ -50,7 +48,7 @@ sequential 3-stage pipeline (`extract_refs.py` → `validate_refs.py` →
 
 1. **DOI correct?** Echo back to user: `即将下载参考文献：DOI=<doi>`
 2. **Edge fully closed?** All `msedge.exe` processes killed (Task Manager check). The script claims the user's persistent Edge profile and needs exclusive access.
-3. **Config set?** First-run users need `<SKILL_DIR>/config.local.toml` with `[crossref].mailto`. Missing config → wrapper prints a WARNING but continues with placeholder defaults.
+3. **Config set?** First-run users need `<REPO_ROOT>/config.local.toml` with `[crossref].mailto`. Missing config → wrapper prints a WARNING but continues with placeholder defaults.
 4. **Output location agreed?** Default for DOI input: `<cwd>/<project_name>_refs/`. For PDF input: `<pdf_dir>/<pdf_stem>_refs/`. Override with `--output-dir`.
 
 ## Output layout
@@ -88,18 +86,18 @@ the root `download_report.csv` may be stale. Trust the latest
 If the wrapper fails partway, run the 3 scripts standalone for partial re-execution:
 
 ```bash
-python <SKILL_DIR>/extract_refs.py <DOI>           # → refs_raw.json
-python <SKILL_DIR>/validate_refs.py <PROJECT>      # → refs_validated.json
-python <SKILL_DIR>/download_refs.py <PROJECT>      # → PDFs + download_report.csv
+python <REPO_ROOT>/extract_refs.py <DOI>           # → refs_raw.json
+python <REPO_ROOT>/validate_refs.py <PROJECT>      # → refs_validated.json
+python <REPO_ROOT>/download_refs.py <PROJECT>      # → PDFs + download_report.csv
 ```
 
-Full 8-step manual flow with code snippets, DOI-resolution fallback chain (Zotero query → fitz text → user prompt), and the procedure for extending `PUBLISHER_MAP` when encountering an unknown DOI prefix → [docs/agent-runbook.md](docs/agent-runbook.md).
+Full 8-step manual flow with code snippets, DOI-resolution fallback chain (Zotero query → fitz text → user prompt), and the procedure for extending `PUBLISHER_MAP` when encountering an unknown DOI prefix → [references/agent-runbook.md](references/agent-runbook.md).
 
 ## See also
 
-- [README.md](README.md) — human-facing setup, install, usage examples
-- [docs/agent-runbook.md](docs/agent-runbook.md) — full manual runbook with code snippets
-- [docs/SUPPORTED_PUBLISHERS.md](docs/SUPPORTED_PUBLISHERS.md) — publisher tier matrix
-- [CONTRIBUTING.md](CONTRIBUTING.md) — adding new publisher / institution SSO
-- [SECURITY.md](SECURITY.md) — Edge profile cookie risk
-- [config.example.toml](config.example.toml) — full config schema
+- [../../README.md](../../README.md) — human-facing setup, install, usage examples
+- [references/agent-runbook.md](references/agent-runbook.md) — full manual runbook with code snippets
+- [../../docs/SUPPORTED_PUBLISHERS.md](../../docs/SUPPORTED_PUBLISHERS.md) — publisher tier matrix
+- [../../CONTRIBUTING.md](../../CONTRIBUTING.md) — adding new publisher / institution SSO
+- [../../SECURITY.md](../../SECURITY.md) — Edge profile cookie risk
+- [../../config.example.toml](../../config.example.toml) — full config schema

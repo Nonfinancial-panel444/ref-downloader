@@ -4,9 +4,11 @@
 > trade-offs, for contributors trying to extend the tool without breaking it.
 >
 > Implementation-level details on individual publishers live in
-> [SUPPORTED_PUBLISHERS.md](SUPPORTED_PUBLISHERS.md). Day-to-day agent flow
-> lives in [agent-runbook.md](agent-runbook.md). User-facing usage lives in
-> [../README.md](../README.md).
+> [SUPPORTED_PUBLISHERS.md](SUPPORTED_PUBLISHERS.md). Agent-mode entry lives in
+> [../skills/ref-downloader/SKILL.md](../skills/ref-downloader/SKILL.md), with the
+> expanded manual flow in
+> [../skills/ref-downloader/references/agent-runbook.md](../skills/ref-downloader/references/agent-runbook.md).
+> User-facing usage lives in [../README.md](../README.md).
 
 ---
 
@@ -32,6 +34,11 @@ run_ref_downloader.py          # entry: DOI resolution + sequencing
   └─ validate_refs.py   (2)   per-DOI metadata + publisher classify → refs_validated.json
   └─ download_refs.py   (3)   Playwright/Edge → PDFs + SI + download_report.csv
 ```
+
+The repository root is the Python project. The installable agent skill is kept
+under `skills/ref-downloader/` so skill evaluators and agent runtimes can load a
+small task-specific bundle instead of treating README files, source files, tests,
+and changelog history as skill context.
 
 Each stage:
 - Reads from the previous stage's JSON output
@@ -170,3 +177,5 @@ contract is explicit so the next contributor can add one safely.
 - `download_refs.py:direct_pdf_url` / `article_url` / `PDF_SELECTORS` — per-publisher URL + selector data
 - `download_refs.py:inspect_access_barrier` — SSO / captcha / Cloudflare detection
 - `tests/test_*.py` — offline unit tests covering config + DOI/publisher classification
+- `skills/ref-downloader/SKILL.md` — installable agent entry
+- `skills/ref-downloader/references/agent-runbook.md` — detailed manual/debug agent flow

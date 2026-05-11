@@ -190,7 +190,9 @@ run_ref_downloader.py   # 入口：加载配置、解析 DOI、串行调度
   └─> download_refs.py    (3) Playwright/Edge：按出版商策略下主文 PDF + SI
 ```
 
-也可以单独运行三个脚本调试或局部重跑。手动流程见 [SKILL.md](SKILL.md)。
+也可以单独运行三个脚本调试或局部重跑。手动流程见 [`skills/ref-downloader/references/agent-runbook.md`](skills/ref-downloader/references/agent-runbook.md)。
+
+Agent 用户可从 [`skills/ref-downloader/SKILL.md`](skills/ref-downloader/SKILL.md) 安装或查看 skill 包。仓库根目录保持为面向人的 Python 项目；skill 包单独放置，避免 Codex 把 README、changelog、测试和源码都当成 skill 的关联上下文。
 
 ## 已支持出版商
 

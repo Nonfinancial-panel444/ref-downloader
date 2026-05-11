@@ -33,9 +33,14 @@ configuration.
   framed as user-value-first ("what you get — *how it's distinctively
   delivered*"). 5 rows, mirrored row-for-row between languages, scannable
   in seconds.
+- **Installable skill package**: agent-mode runbook now lives under
+  `skills/ref-downloader/`, keeping the repository root as the human-facing
+  Python project while the skill bundle stays small and installable.
+- `skills/ref-downloader/agents/openai.yaml`: UI metadata for the packaged skill.
 - **SKILL.md slim entry**: agent-mode runbook reduced from 420 → 105 lines,
   with the long 8-step manual flow + DOI-resolution code + `PUBLISHER_MAP`
-  extension procedure moved to [docs/agent-runbook.md](docs/agent-runbook.md).
+  extension procedure moved to
+  [skills/ref-downloader/references/agent-runbook.md](skills/ref-downloader/references/agent-runbook.md).
   SKILL.md now follows skill-creator best practice: trigger phrases,
   primary entry command, pre-flight checklist, common-failure lookup table,
   pointer to the extended runbook.

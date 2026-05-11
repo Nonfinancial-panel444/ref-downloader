@@ -142,9 +142,10 @@ python -c "import _config, run_ref_downloader, extract_refs, validate_refs, down
 
 This catches `SyntaxError`, `ImportError`, `NameError` early.
 
-## Future automated tests
+## Next automated test targets
 
-When pytest scaffolding lands, target:
+The current offline pytest suite covers config, DOI naming, and publisher
+classification. Good next targets:
 
 - `_config.py`: TOML merge order, env override behavior, missing files
 - `extract_refs.py`: argument parsing, non-tty input handling
