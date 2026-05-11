@@ -33,6 +33,14 @@ configuration.
   framed as user-value-first ("what you get — *how it's distinctively
   delivered*"). 5 rows, mirrored row-for-row between languages, scannable
   in seconds.
+- **SKILL.md slim entry**: agent-mode runbook reduced from 420 → 105 lines,
+  with the long 8-step manual flow + DOI-resolution code + `PUBLISHER_MAP`
+  extension procedure moved to [docs/agent-runbook.md](docs/agent-runbook.md).
+  SKILL.md now follows skill-creator best practice: trigger phrases,
+  primary entry command, pre-flight checklist, common-failure lookup table,
+  pointer to the extended runbook.
+- README and README.zh.md gain a `status-beta` badge + an explicit "Status:
+  beta (v0.1.0)" status line so users calibrate expectations.
 
 ### Publishers
 
