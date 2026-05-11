@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ref Downloader"
-  short_description: "Batch-download paper references via DOI/PDF"
-  default_prompt: "Use $ref-downloader to batch-download all references for this DOI or local PDF."

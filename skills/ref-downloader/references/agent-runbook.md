@@ -7,8 +7,12 @@
 >
 > Audience: agent mode (or human contributor) needing to debug or extend.
 
-`<REPO_ROOT>` = the repository root two directories above `skills/ref-downloader/`.
-All Python commands below run scripts from `<REPO_ROOT>`.
+`<SKILL_DIR>` = this skill's folder (`skills/ref-downloader/` in source, or
+`~/.claude/skills/ref-downloader/` etc. after install). Python scripts live in
+`<SKILL_DIR>/scripts/`; config files (`config.example.toml`,
+`config.local.toml`) live at `<SKILL_DIR>/`. All commands below assume the
+user has installed prereqs once (`pip install -r requirements.txt &&
+playwright install msedge`).
 
 ---
 
@@ -158,7 +162,7 @@ Notes:
 
 ```bash
 cd "<OUTPUT_DIR>"
-python "<REPO_ROOT>/extract_refs.py" <DOI>
+python "<SKILL_DIR>/scripts/extract_refs.py" <DOI>
 ```
 
 **Expected**: `<PROJECT_NAME>/refs_raw.json` created; console prints reference count.
@@ -178,7 +182,7 @@ python "<REPO_ROOT>/extract_refs.py" <DOI>
 
 ```bash
 cd "<OUTPUT_DIR>"
-python "<REPO_ROOT>/validate_refs.py" <PROJECT_NAME>
+python "<SKILL_DIR>/scripts/validate_refs.py" <PROJECT_NAME>
 ```
 
 **Expected**: `refs_validated.json` created; console shows `Verified: X / Failed: Y / No DOI: Z`.
@@ -218,7 +222,7 @@ with urllib.request.urlopen(req, timeout=15) as r:
     print(f"  {prefix} → {publisher_name}")
 ```
 
-Map publisher name to the internal key (see table) and update `PUBLISHER_MAP` in `<REPO_ROOT>/validate_refs.py`:
+Map publisher name to the internal key (see table) and update `PUBLISHER_MAP` in `<SKILL_DIR>/scripts/validate_refs.py`:
 
 | Publisher name contains | Internal key |
 |---|---|
@@ -236,7 +240,7 @@ After updating `PUBLISHER_MAP`, **re-run** `validate_refs.py` (incremental: only
 
 ```bash
 cd "<OUTPUT_DIR>"
-python "<REPO_ROOT>/validate_refs.py" <PROJECT_NAME>
+python "<SKILL_DIR>/scripts/validate_refs.py" <PROJECT_NAME>
 ```
 
 Also: if `download_refs.py` lacks a `direct_pdf_url` template or `PDF_SELECTORS` entry for the new publisher, add reasonable defaults (use `doi.org/{doi}` for article URL, `a:has-text("PDF")` as a selector fallback). See [CONTRIBUTING.md](../../../CONTRIBUTING.md) for the full add-publisher workflow.
@@ -247,7 +251,7 @@ Also: if `download_refs.py` lacks a `direct_pdf_url` template or `PDF_SELECTORS`
 
 ```bash
 cd "<OUTPUT_DIR>"
-python "<REPO_ROOT>/download_refs.py" <PROJECT_NAME>
+python "<SKILL_DIR>/scripts/download_refs.py" <PROJECT_NAME>
 ```
 
 **Default mode is interactive**; do not prepend `--auto` blindly.
@@ -335,7 +339,7 @@ Patterns cleaned (if present):
 Cleanup rules:
 - Only the `OUTPUT_DIR` itself, no recursion into subdirs
 - `.bak` files are preserved (likely user backups)
-- Nothing in `<REPO_ROOT>` is touched
+- Nothing in `<SKILL_DIR>` is touched
 - Manual three-script invocations skip this step by default
 
 ---
@@ -350,7 +354,7 @@ Cleanup rules:
 | Root `download_report.csv` looks stale | If the run was interrupted, use the latest `runs/<timestamp>/events.jsonl` + the project directory's actual files. |
 | Many `failed` in `validated.json` | Transient Crossref API failure; re-run Step 5 (incremental skips already-verified). |
 | Zotero lookup returns nothing for a PDF | Confirm `[zotero].db_path` points to the right `zotero.sqlite`; fall back to fitz text extraction; if both fail, ask user for the DOI manually. |
-| `WARNING: crossref.mailto is the placeholder` | Edit `<REPO_ROOT>/config.local.toml` and set `[crossref].mailto` to a real email to enter Crossref polite pool. |
+| `WARNING: crossref.mailto is the placeholder` | Edit `<SKILL_DIR>/config.local.toml` and set `[crossref].mailto` to a real email to enter Crossref polite pool. |
 
 ## See also
 
@@ -358,4 +362,4 @@ Cleanup rules:
 - [../../../README.md](../../../README.md) — human-facing setup and usage
 - [../../../docs/SUPPORTED_PUBLISHERS.md](../../../docs/SUPPORTED_PUBLISHERS.md) — per-publisher download strategy + maturity tier
 - [../../../CONTRIBUTING.md](../../../CONTRIBUTING.md) — adding a new publisher / institution SSO patterns
-- [../../../config.example.toml](../../../config.example.toml) — full config schema
+- [../config.example.toml](../config.example.toml) — full config schema (now at skill root)

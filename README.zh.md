@@ -81,12 +81,25 @@ PDFs land in:      ./jacs.5c05017_refs/jacs.5c05017/
 
 ## 快速开始
 
+Skill 自包含在 `skills/ref-downloader/` 下。选你的 agent 框架对应的安装路径：
+
 ```powershell
 # 把 <REPO_URL> 换成本仓库的 clone URL
-git clone <REPO_URL> && cd ref-downloader
-pip install -r requirements.txt && playwright install msedge
+git clone <REPO_URL>
+
+# 任选一个安装位置（按你的 agent 框架）:
+#   Claude Code:        cp -r ref-downloader/skills/ref-downloader ~/.claude/skills/
+#   Codex CLI:          cp -r ref-downloader/skills/ref-downloader ~/.codex/skills/
+#   Copilot CLI / VSC:  cp -r ref-downloader/skills/ref-downloader .github/skills/
+#   项目级（任何框架）: cp -r ref-downloader/skills/ref-downloader .agents/skills/
+
+cd ~/.claude/skills/ref-downloader     # 或你 cp 到的目标位置
+pip install playwright pymupdf          # skill 协议不管 Python 依赖
+playwright install msedge
 cp config.example.toml config.local.toml      # 然后改 [crossref].mailto
-python run_ref_downloader.py 10.1021/jacs.5c05017
+
+# 然后在 agent 里描述任务，skill 会通过 description 触发。
+# CLI 直接调试: python scripts/run_ref_downloader.py 10.1021/jacs.5c05017
 ```
 
 预期看到：化学/物理论文一般 30-80 篇参考文献被发现，状态混合 `downloaded`（你机构覆盖的）、`manual_pending`（SSO 跳转或付费墙）、偶尔 `failed`（出版商怪癖）。建议第一次跑用一篇你机构实际订阅期刊的 DOI，命中率最高。详细安装与配置见下方。
@@ -101,26 +114,60 @@ python run_ref_downloader.py 10.1021/jacs.5c05017
 
 ## 安装
 
-```powershell
-# 把 <REPO_URL> 换成本仓库的 clone URL
-git clone <REPO_URL>
-cd ref-downloader
+### 作为 agent skill（推荐）
 
-pip install -r requirements.txt
+按你的 agent 框架选目录：
+
+| 框架 | 安装命令 |
+|---|---|
+| Claude Code | `cp -r skills/ref-downloader ~/.claude/skills/` |
+| Claude Agent SDK | 同上（自动从 `~/.claude/skills/` 发现） |
+| Codex CLI | `cp -r skills/ref-downloader ~/.codex/skills/` |
+| Copilot CLI / VS Code agent | `cp -r skills/ref-downloader .github/skills/` |
+| 任一框架（项目级） | `cp -r skills/ref-downloader .agents/skills/` |
+
+然后在拷过去的 skill 目录内装 Python 依赖（skill 协议不管这些）：
+
+```powershell
+cd ~/.claude/skills/ref-downloader     # 或你 cp 到的目标
+pip install playwright pymupdf
 playwright install msedge
 
 cp config.example.toml config.local.toml
-# 在你顺手的编辑器里编辑 config.local.toml，至少改 [crossref].mailto
+# 编辑 config.local.toml，至少改 [crossref].mailto
 # Windows: notepad config.local.toml
 # macOS / Linux: $EDITOR config.local.toml   (或 vim / nano / code 等)
 ```
 
+### 作为 Python 工具开发
+
+如果要 hack 代码，skill 文件夹本身就是个可运行 Python 项目：
+
+```powershell
+git clone <REPO_URL>
+cd ref-downloader
+
+pip install -r requirements.txt -r requirements-dev.txt
+playwright install msedge
+
+cp skills/ref-downloader/config.example.toml skills/ref-downloader/config.local.toml
+# 编辑 config.local.toml，至少改 [crossref].mailto
+
+# 跑离线测试
+python -m pytest tests/ -v
+
+# 直接调脚本
+python skills/ref-downloader/scripts/run_ref_downloader.py 10.1021/jacs.5c05017
+```
+
 ## 使用示例
+
+（安装后——路径假设 skill 安装在 `<SKILL_DIR>`，如 `~/.claude/skills/ref-downloader/`。源码状态下，`<SKILL_DIR>` = `skills/ref-downloader/`。）
 
 ### 输入：一个 DOI
 
 ```powershell
-python run_ref_downloader.py 10.1021/jacs.5c05017
+python <SKILL_DIR>/scripts/run_ref_downloader.py 10.1021/jacs.5c05017
 ```
 
 默认输出到 `<cwd>/jacs.5c05017_refs/jacs.5c05017/`
@@ -128,7 +175,7 @@ python run_ref_downloader.py 10.1021/jacs.5c05017
 ### 输入：本地 PDF（metadata 中含 DOI 或 PDF 文本中可识别 DOI）
 
 ```powershell
-python run_ref_downloader.py "C:\path\to\your_paper.pdf"
+python <SKILL_DIR>/scripts/run_ref_downloader.py "C:\path\to\your_paper.pdf"
 ```
 
 默认输出到 `<pdf_dir>/your_paper_refs/<根据 DOI 派生的目录名>/`
@@ -136,19 +183,19 @@ python run_ref_downloader.py "C:\path\to\your_paper.pdf"
 ### 自定义输出目录
 
 ```powershell
-python run_ref_downloader.py 10.1021/jacs.5c05017 --output-dir refs/
+python <SKILL_DIR>/scripts/run_ref_downloader.py 10.1021/jacs.5c05017 --output-dir refs/
 ```
 
 ### 非交互模式（CI / 批处理）
 
 ```powershell
-python run_ref_downloader.py 10.1021/jacs.5c05017 --yes --auto
+python <SKILL_DIR>/scripts/run_ref_downloader.py 10.1021/jacs.5c05017 --yes --auto
 ```
 
 ### 使用备选配置文件
 
 ```powershell
-python run_ref_downloader.py 10.1021/jacs.5c05017 --config ./alt.toml
+python <SKILL_DIR>/scripts/run_ref_downloader.py 10.1021/jacs.5c05017 --config ./alt.toml
 ```
 
 ## 配置
@@ -184,10 +231,16 @@ python run_ref_downloader.py 10.1021/jacs.5c05017 --config ./alt.toml
 三阶段流水线 + 一个 wrapper：
 
 ```
-run_ref_downloader.py   # 入口：加载配置、解析 DOI、串行调度
-  └─> extract_refs.py     (1) Crossref API：抓取主论文的参考文献列表
-  └─> validate_refs.py    (2) Crossref API：逐条 metadata + 出版商分类
-  └─> download_refs.py    (3) Playwright/Edge：按出版商策略下主文 PDF + SI
+skills/ref-downloader/
+├── SKILL.md                            agent 入口（slim runbook）
+├── references/agent-runbook.md         扩展的手动流程 + DOI fallback
+├── config.example.toml                 配置模板（拷贝为 config.local.toml）
+└── scripts/
+    ├── run_ref_downloader.py           入口：加载配置、解析 DOI、串行调度
+    │     └─> extract_refs.py    (1) Crossref API：抓取主论文的参考文献列表
+    │     └─> validate_refs.py   (2) Crossref API：逐条 metadata + 出版商分类
+    │     └─> download_refs.py   (3) Playwright/Edge：按出版商策略下主文 PDF + SI
+    └── _config.py                      TOML + 环境变量加载器
 ```
 
 也可以单独运行三个脚本调试或局部重跑。手动流程见 [`skills/ref-downloader/references/agent-runbook.md`](skills/ref-downloader/references/agent-runbook.md)。

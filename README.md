@@ -81,12 +81,25 @@ PDFs land in:      ./jacs.5c05017_refs/jacs.5c05017/
 
 ## Quick start
 
+The skill is self-contained under `skills/ref-downloader/`. Pick the install path for your agent framework:
+
 ```powershell
 # Replace <REPO_URL> with this repo's clone URL.
-git clone <REPO_URL> && cd ref-downloader
-pip install -r requirements.txt && playwright install msedge
+git clone <REPO_URL>
+
+# Pick ONE install destination for your agent framework:
+#   Claude Code:        cp -r ref-downloader/skills/ref-downloader ~/.claude/skills/
+#   Codex CLI:          cp -r ref-downloader/skills/ref-downloader ~/.codex/skills/
+#   Copilot CLI / VSC:  cp -r ref-downloader/skills/ref-downloader .github/skills/
+#   Project-local:      cp -r ref-downloader/skills/ref-downloader .agents/skills/
+
+cd ~/.claude/skills/ref-downloader     # or wherever you copied it
+pip install -r ../../../ref-downloader/requirements.txt   # path back to source
+playwright install msedge
 cp config.example.toml config.local.toml      # then set [crossref].mailto
-python run_ref_downloader.py 10.1021/jacs.5c05017
+
+# In your agent: just describe the task; the skill triggers via its description.
+# Direct CLI for testing: python scripts/run_ref_downloader.py 10.1021/jacs.5c05017
 ```
 
 What you'll see: 30–80 refs discovered for a typical chemistry/physics paper, then a mix of `downloaded` (refs your institution covers), `manual_pending` (SSO bounce or paywall), and occasional `failed` (publisher quirk). Run on a DOI from a journal your institution actually subscribes to for the highest hit rate. Details below.
@@ -101,26 +114,60 @@ What you'll see: 30–80 refs discovered for a typical chemistry/physics paper, 
 
 ## Install
 
-```powershell
-# Replace <REPO_URL> with this repo's clone URL.
-git clone <REPO_URL>
-cd ref-downloader
+### As an agent skill (recommended)
 
-pip install -r requirements.txt
+Pick the install path for your agent framework:
+
+| Framework | Install command |
+|---|---|
+| Claude Code | `cp -r skills/ref-downloader ~/.claude/skills/` |
+| Claude Agent SDK | same (auto-discovers `~/.claude/skills/`) |
+| Codex CLI | `cp -r skills/ref-downloader ~/.codex/skills/` |
+| Copilot CLI / VS Code agent | `cp -r skills/ref-downloader .github/skills/` |
+| Any framework (project-local) | `cp -r skills/ref-downloader .agents/skills/` |
+
+Then install Python prereqs INSIDE the copied skill folder (the skill protocol doesn't manage Python deps):
+
+```powershell
+cd ~/.claude/skills/ref-downloader            # or wherever you copied it
+pip install playwright pymupdf                # or use the source's requirements.txt
 playwright install msedge
 
 cp config.example.toml config.local.toml
-# Edit config.local.toml in your preferred editor — at minimum set [crossref].mailto.
+# Edit config.local.toml — at minimum set [crossref].mailto.
 # Windows: notepad config.local.toml
 # macOS / Linux: $EDITOR config.local.toml   (or vim / nano / code / ...)
 ```
 
+### As a Python tool (for developers)
+
+If you want to hack on the code, the skill folder _is_ a runnable Python project:
+
+```powershell
+git clone <REPO_URL>
+cd ref-downloader
+
+pip install -r requirements.txt -r requirements-dev.txt
+playwright install msedge
+
+cp skills/ref-downloader/config.example.toml skills/ref-downloader/config.local.toml
+# Edit config.local.toml — at minimum set [crossref].mailto.
+
+# Run the offline test suite
+python -m pytest tests/ -v
+
+# Run the tool directly
+python skills/ref-downloader/scripts/run_ref_downloader.py 10.1021/jacs.5c05017
+```
+
 ## Usage examples
+
+(After install — paths assume the skill is at `<SKILL_DIR>`, e.g. `~/.claude/skills/ref-downloader/`. In source, `<SKILL_DIR>` = `skills/ref-downloader/`.)
 
 ### Input: a DOI
 
 ```powershell
-python run_ref_downloader.py 10.1021/jacs.5c05017
+python <SKILL_DIR>/scripts/run_ref_downloader.py 10.1021/jacs.5c05017
 ```
 
 Default output: `<cwd>/jacs.5c05017_refs/jacs.5c05017/`
@@ -128,7 +175,7 @@ Default output: `<cwd>/jacs.5c05017_refs/jacs.5c05017/`
 ### Input: a local PDF (with DOI in metadata or in PDF text)
 
 ```powershell
-python run_ref_downloader.py "C:\path\to\your_paper.pdf"
+python <SKILL_DIR>/scripts/run_ref_downloader.py "C:\path\to\your_paper.pdf"
 ```
 
 Default output: `<pdf_dir>/your_paper_refs/<doi-derived-name>/`
@@ -136,19 +183,19 @@ Default output: `<pdf_dir>/your_paper_refs/<doi-derived-name>/`
 ### Custom output directory
 
 ```powershell
-python run_ref_downloader.py 10.1021/jacs.5c05017 --output-dir refs/
+python <SKILL_DIR>/scripts/run_ref_downloader.py 10.1021/jacs.5c05017 --output-dir refs/
 ```
 
 ### Non-interactive (CI / batch)
 
 ```powershell
-python run_ref_downloader.py 10.1021/jacs.5c05017 --yes --auto
+python <SKILL_DIR>/scripts/run_ref_downloader.py 10.1021/jacs.5c05017 --yes --auto
 ```
 
 ### Alternate config file
 
 ```powershell
-python run_ref_downloader.py 10.1021/jacs.5c05017 --config ./alt.toml
+python <SKILL_DIR>/scripts/run_ref_downloader.py 10.1021/jacs.5c05017 --config ./alt.toml
 ```
 
 ## Configuration
@@ -184,10 +231,16 @@ See [`config.example.toml`](config.example.toml) for full documentation.
 Three-stage pipeline + a wrapper:
 
 ```
-run_ref_downloader.py   # entry point — config loading, DOI resolution, sequencing
-  └─> extract_refs.py     (1) Crossref API: fetch parent paper's reference list
-  └─> validate_refs.py    (2) Crossref API: per-ref metadata + publisher classify
-  └─> download_refs.py    (3) Playwright/Edge: download main PDF + SI per publisher
+skills/ref-downloader/
+├── SKILL.md                            agent runbook (slim entry)
+├── references/agent-runbook.md         extended manual flow + DOI fallback
+├── config.example.toml                 config schema (copy to config.local.toml)
+└── scripts/
+    ├── run_ref_downloader.py           entry — config + DOI resolution + sequencing
+    │     └─> extract_refs.py    (1) Crossref API: fetch parent's reference list
+    │     └─> validate_refs.py   (2) Crossref API: per-ref metadata + publisher classify
+    │     └─> download_refs.py   (3) Playwright/Edge: download main PDF + SI per publisher
+    └── _config.py                      TOML + env-var loader
 ```
 
 You can also run the three scripts manually for debugging or partial restarts. See the agent runbook in [`skills/ref-downloader/references/agent-runbook.md`](skills/ref-downloader/references/agent-runbook.md) for the manual flow.

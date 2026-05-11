@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed (breaking — install path)
+
+- **Skill is now self-contained at `skills/ref-downloader/`.** Python sources
+  moved from repo root to `skills/ref-downloader/scripts/`; `config.example.toml`
+  moved to `skills/ref-downloader/`. The skill folder can now be copied
+  directly to any agent framework's skill directory (`~/.claude/skills/`,
+  `~/.codex/skills/`, `.github/skills/`, `.agents/skills/`) without dragging
+  the rest of the repo along — Level-2 portable skill structure per
+  `anthropics/skills` convention.
+- `_config.py` constant `PACKAGE_DIR` → `_SKILL_DIR`; it now points to the
+  skill root (parent of `scripts/`) so config files sit one level up from
+  scripts — matches user-expected layout (config visible at skill root, not
+  buried inside scripts/).
+- `run_ref_downloader.py` constant `SKILL_DIR` → `SCRIPTS_DIR` to reflect the
+  actual semantics after the move.
+- Removed `skills/ref-downloader/agents/openai.yaml`. Codex's own skill format
+  is now SKILL.md frontmatter (matching Anthropic's spec); the bespoke
+  `openai.yaml` UI metadata file was not portable across frameworks.
+  Users who specifically need Codex UI metadata can add their own.
+- README install section restructured: "as agent skill" (per-framework
+  `cp -r` command) vs "as Python tool" (clone + pip + pytest).
+- `tests/conftest.py` `sys.path` now points to
+  `skills/ref-downloader/scripts/` instead of repo root.
+
+### Migration note for existing users
+
+If you previously installed by cloning the repo and running scripts from root:
+- Your local `config.local.toml` at repo root → move to `skills/ref-downloader/config.local.toml`
+- Direct script invocations `python run_ref_downloader.py X` → become `python skills/ref-downloader/scripts/run_ref_downloader.py X`
+- Agent-mode users: re-copy `skills/ref-downloader/` to your framework's skill path; old `SKILL.md` at repo root is gone.
+
 ## [0.1.0] — 2026-05-10
 
 Initial open-source release. Refactored from a personal Claude Code skill;

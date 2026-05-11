@@ -29,7 +29,7 @@ encoded in Python.
 Three-stage pipeline + a single-entry wrapper:
 
 ```
-run_ref_downloader.py          # entry: DOI resolution + sequencing
+skills/ref-downloader/scripts/run_ref_downloader.py   # entry: DOI + sequencing
   └─ extract_refs.py    (1)   Crossref → refs_raw.json
   └─ validate_refs.py   (2)   per-DOI metadata + publisher classify → refs_validated.json
   └─ download_refs.py   (3)   Playwright/Edge → PDFs + SI + download_report.csv
@@ -171,11 +171,16 @@ contract is explicit so the next contributor can add one safely.
 
 ## Files of interest for contributors
 
+All Python sources live in `skills/ref-downloader/scripts/`:
+
 - `_config.py` — config schema + loader (small, well-tested)
 - `validate_refs.py:PUBLISHER_MAP` — DOI prefix → publisher key
 - `download_refs.py:PUBLISHER_STRATEGIES` — strategy tier per publisher
 - `download_refs.py:direct_pdf_url` / `article_url` / `PDF_SELECTORS` — per-publisher URL + selector data
 - `download_refs.py:inspect_access_barrier` — SSO / captcha / Cloudflare detection
+
+Other entry points:
+
 - `tests/test_*.py` — offline unit tests covering config + DOI/publisher classification
 - `skills/ref-downloader/SKILL.md` — installable agent entry
 - `skills/ref-downloader/references/agent-runbook.md` — detailed manual/debug agent flow

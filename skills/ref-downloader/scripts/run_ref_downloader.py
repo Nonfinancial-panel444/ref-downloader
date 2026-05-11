@@ -29,7 +29,7 @@ from typing import Optional
 from _config import load_config, warn_if_placeholder_mailto
 
 
-SKILL_DIR = Path(__file__).resolve().parent
+SCRIPTS_DIR = Path(__file__).resolve().parent
 LEGACY_ROOT_FILENAMES = (
     "fetch_refs.py",
     "fetch_refs_playwright.py",
@@ -125,7 +125,7 @@ def resolve_input(input_value: str, output_dir_arg: str, zotero_db: Path) -> tup
 
 
 def run_step(script_name: str, args: list[str], cwd: Path) -> None:
-    cmd = [sys.executable, str(SKILL_DIR / script_name), *args]
+    cmd = [sys.executable, str(SCRIPTS_DIR / script_name), *args]
     print(f"\n>>> Running: {' '.join(cmd)}")
     print(f"    cwd: {cwd}")
     subprocess.run(cmd, cwd=str(cwd), check=True)

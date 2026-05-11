@@ -19,9 +19,12 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import List, Optional
 
-PACKAGE_DIR = Path(__file__).resolve().parent
-EXAMPLE_TOML = PACKAGE_DIR / "config.example.toml"
-LOCAL_TOML = PACKAGE_DIR / "config.local.toml"
+# Scripts live in <skill>/scripts/. Config files (config.example.toml,
+# config.local.toml) live one level up at the skill root so users don't
+# have to descend into scripts/ to edit them.
+_SKILL_DIR = Path(__file__).resolve().parent.parent
+EXAMPLE_TOML = _SKILL_DIR / "config.example.toml"
+LOCAL_TOML = _SKILL_DIR / "config.local.toml"
 PLACEHOLDER_MAILTO = "your.email@example.com"
 
 # Single source of truth for the User-Agent app version. Keep in sync with
